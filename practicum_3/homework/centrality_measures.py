@@ -3,11 +3,13 @@ from itertools import combinations
 
 import numpy as np
 import networkx as nx
+import matplotlib.pyplot as plt  # Добавлен импорт matplotlib
 
 
 class CentralityMeasure(Protocol):
     def __call__(self, G: nx.Graph) -> dict[Any, float]:
         ...
+
 
 def plot_graph(G: nx.Graph, node_weights: dict[Any, float], figsize=(14, 8), name: str = ""):
     plt.figure(figsize=figsize)
@@ -29,6 +31,7 @@ def plot_graph(G: nx.Graph, node_weights: dict[Any, float], figsize=(14, 8), nam
     plt.axis("off")
     plt.show()
 
+
 def create_custom_graph():
     G = nx.Graph()
     
@@ -44,7 +47,8 @@ def create_custom_graph():
     
     return G
     
-def closeness_centrality(G: AnyNxGraph) -> dict[Any, float]:
+
+def closeness_centrality(G: nx.Graph) -> dict[Any, float]:  # Заменено AnyNxGraph на nx.Graph
     centrality = {}
     n = len(G.nodes())
     
@@ -61,7 +65,7 @@ def closeness_centrality(G: AnyNxGraph) -> dict[Any, float]:
     return centrality
 
 
-def betweenness_centrality(G: AnyNxGraph) -> dict[Any, float]: 
+def betweenness_centrality(G: nx.Graph) -> dict[Any, float]:  # Заменено AnyNxGraph на nx.Graph
     centrality = {node: 0.0 for node in G.nodes()}
     nodes = list(G.nodes())
     
@@ -77,7 +81,7 @@ def betweenness_centrality(G: AnyNxGraph) -> dict[Any, float]:
     return centrality
 
 
-def eigenvector_centrality(G: AnyNxGraph) -> dict[Any, float]: 
+def eigenvector_centrality(G: nx.Graph) -> dict[Any, float]:  # Заменено AnyNxGraph на nx.Graph
     nodes = list(G.nodes())
     A = nx.to_numpy_array(G, nodelist=nodes)
     
@@ -106,4 +110,3 @@ if __name__ == "__main__":
     plot_centrality_measure(G, closeness_centrality)
     plot_centrality_measure(G, betweenness_centrality)
     plot_centrality_measure(G, eigenvector_centrality)
-
