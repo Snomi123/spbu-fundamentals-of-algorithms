@@ -13,20 +13,41 @@ class LuSolverWithPermute(LinearSystemSolver):
         self.L, self.U, self.P = self._decompose(permute)
 
     def solve(self, b: NDArrayFloat) -> NDArrayFloat:
-
-        ##########################
-        ### PUT YOUR CODE HERE ###
-        ##########################
-
-        pass
+        Pb = self.P @ b
+        n = self.L.shape[0]
+        y = np.zeros(n, dtype=self.dtype)
+        
+        for i in range(n):
+            y[i] = Pb[i] - self.L[i, :i] @ y[:i]
+        
+        x = np.zeros_like(y)
+        for i in reversed(range(n)):
+            x[i] = (y[i] - self.U[i, i+1:] @ x[i+1:]) / self.U[i, i]
+        
+        return x
 
     def _decompose(self, permute: bool) -> tuple[NDArrayFloat, NDArrayFloat, NDArrayFloat]:
-
-        ##########################
-        ### PUT YOUR CODE HERE ###
-        ##########################
-
-        pass
+        U = self.A.astype(self.dtype).copy()
+        n = U.shape[0]
+        L = np.zeros((n, n), self.dtype)
+        P = np.eye(n, dtype=self.dtype)
+        
+        for k in range(n):
+            if permute:
+                max_row = k + np.argmax(np.abs(U[k:, k]))
+                if max_row != k:
+                    U[[k, max_row], :] = U[[max_row, k], :]
+                    P[[k, max_row]] = P[[max_row, k]]
+                    L[[k, max_row], :k] = L[[max_row, k], :k]
+            
+            if U[k, k] == 0:
+                raise np.linalg.LinAlgError("Zero pivot encountered")
+            
+            L[k+1:, k] = U[k+1:, k] / U[k, k]
+            U[k+1:] -= L[k+1:, k, None] * U[k]
+        
+        np.fill_diagonal(L, 1.0)
+        return L, U, P
 
 
 def get_A_b(a_11: float, b_1: float) -> tuple[NDArrayFloat, NDArrayFloat]:
@@ -36,12 +57,11 @@ def get_A_b(a_11: float, b_1: float) -> tuple[NDArrayFloat, NDArrayFloat]:
 
 
 if __name__ == "__main__":
-    p = 16  # modify from 7 to 16 to check instability
-    a_11 = 3 + 10 ** (-p)  # add/remove 10**(-p) to check instability
-    b_1 = -16 + 10 ** (-p)  # add/remove 10**(-p) to check instability
+    p = 16  
+    a_11 = 3 + 10 ** (-p)
+    b_1 = -16 + 10 ** (-p)
     A, b = get_A_b(a_11, b_1)
 
-    solver = LuSolver(A, np.float64, permute=True)
+    solver = LuSolverWithPermute(A, np.float64, permute=True)
     x = solver.solve(b)
     assert np.all(np.isclose(x, [1, -7, 4])), f"The anwser {x} is not accurate enough"
-
