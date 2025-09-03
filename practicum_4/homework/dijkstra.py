@@ -2,10 +2,11 @@ from pathlib import Path
 from typing import Any
 from abc import ABC, abstractmethod
 
+import heapq
 import numpy as np
 import networkx as nx
 
-from practicum_4.dfs import GraphTraversal 
+from practicum_4.dfs import GraphTraversal
 from src.plotting.graphs import plot_graph
 from src.common import AnyNxGraph
 
@@ -16,21 +17,33 @@ class DijkstraAlgorithm(GraphTraversal):
         super().__init__(G)
 
     def previsit(self, node: Any, **params) -> None:
-        """List of params:
-        * path: list[Any] (path from the initial node to the given node)
-        """
         self.shortest_paths[node] = params["path"]
 
     def postvisit(self, node: Any, **params) -> None:
         pass
 
-    def run(self, node: Any) -> None:
-
-        ##########################
-        ### PUT YOUR CODE HERE ###
-        #########################
-
-        pass
+    def run(self, start_node: Any) -> None:
+        distances = {node: float('inf') for node in self.G.nodes}
+        distances[start_node] = 0
+        self.shortest_paths[start_node] = [start_node]
+        
+        heap = [(0, start_node)]
+        
+        while heap:
+            current_dist, current_node = heapq.heappop(heap)
+            
+            if current_dist > distances[current_node]:
+                continue
+                
+            for neighbor in self.G.neighbors(current_node):
+                edge_weight = self.G[current_node][neighbor]['weight']
+                new_dist = current_dist + edge_weight
+                
+                if new_dist < distances[neighbor]:
+                    distances[neighbor] = new_dist
+                    new_path = self.shortest_paths[current_node] + [neighbor]
+                    self.shortest_paths[neighbor] = new_path
+                    heapq.heappush(heap, (new_dist, neighbor))
 
 
 if __name__ == "__main__":
@@ -49,4 +62,3 @@ if __name__ == "__main__":
         for i in range(len(sp.shortest_paths[test_node]) - 1)
     ]
     plot_graph(G, highlighted_edges=shortest_path_edges)
-
