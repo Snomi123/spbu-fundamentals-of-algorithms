@@ -1,6 +1,10 @@
+import sys
 from pathlib import Path
 from typing import Any
 from abc import ABC, abstractmethod
+
+project_root = Path(__file__).parent.parent.parent
+sys.path.append(str(project_root))
 
 import heapq
 import numpy as np
