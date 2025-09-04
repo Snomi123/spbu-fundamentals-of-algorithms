@@ -1,5 +1,6 @@
 import heapq
 import numpy as np
+import os
 
 
 class HuffmanCoding:
@@ -8,6 +9,9 @@ class HuffmanCoding:
         self.root = None
 
     def encode(self, sequence: list) -> str:
+        if not sequence:
+            return ''
+            
         freq = {}
         for symbol in sequence:
             freq[symbol] = freq.get(symbol, 0) + 1
@@ -39,6 +43,12 @@ class HuffmanCoding:
         return ''.join(self.codes[symbol] for symbol in sequence)
         
     def decode(self, encoded_sequence: str) -> list:
+        if not encoded_sequence:
+            return []
+            
+        if not isinstance(self.root, tuple):
+            return [self.root] * len(encoded_sequence)
+            
         decoded = []
         current_node = self.root
         for bit in encoded_sequence:
@@ -76,7 +86,9 @@ class LossyCompression:
 
 
 if __name__ == "__main__":
-    ts = np.loadtxt("pershin/spbu-fundamentals-of-algorithms/ts_homework_practicum_5.txt")
+    file_path = "ts_homework_practicum_5.txt"
+
+    ts = np.loadtxt(file_path)
 
     compressor = LossyCompression()
     bits = compressor.compress(ts)
