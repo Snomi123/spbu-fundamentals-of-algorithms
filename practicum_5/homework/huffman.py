@@ -74,7 +74,9 @@ class LossyCompression:
         min_val = np.min(time_series)
         max_val = np.max(time_series)
         self.bins = np.linspace(min_val, max_val, self.levels + 1)
+        
         quantized = np.digitize(time_series, self.bins) - 1
+        quantized = np.clip(quantized, 0, self.levels - 1)
         
         return self.huffman.encode(quantized.tolist())
 
