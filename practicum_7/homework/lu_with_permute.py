@@ -13,40 +13,43 @@ class LuSolverWithPermute(LinearSystemSolver):
         self.L, self.U, self.P = self._decompose(permute)
 
     def solve(self, b: NDArrayFloat) -> NDArrayFloat:
-        Pb = self.P @ b
+        b_permuted = self.P @ b
         n = self.L.shape[0]
-        y = np.zeros(n, dtype=self.dtype)
-        
+        y = np.zeros_like(b_permuted, dtype=self.dtype)
+
         for i in range(n):
-            y[i] = Pb[i] - self.L[i, :i] @ y[:i]
-        
-        x = np.zeros_like(y)
-        for i in reversed(range(n)):
-            x[i] = (y[i] - self.U[i, i+1:] @ x[i+1:]) / self.U[i, i]
-        
+            y[i] = b_permuted[i] - np.dot(self.L[i, :i], y[:i])
+            y[i] /= self.L[i, i]
+
+        x = np.zeros_like(y, dtype=self.dtype)
+        for i in range(n-1, -1, -1):
+            x[i] = y[i] - np.dot(self.U[i, i+1:], x[i+1:])
+            x[i] /= self.U[i, i]
+
         return x
 
     def _decompose(self, permute: bool) -> tuple[NDArrayFloat, NDArrayFloat, NDArrayFloat]:
-        U = self.A.astype(self.dtype).copy()
-        n = U.shape[0]
-        L = np.zeros((n, n), self.dtype)
+        n = self.A.shape[0]
+        U = self.A.copy()
+        L = np.eye(n, dtype=self.dtype)
         P = np.eye(n, dtype=self.dtype)
-        
-        for k in range(n):
+
+        for k in range(n-1):
             if permute:
-                max_row = k + np.argmax(np.abs(U[k:, k]))
-                if max_row != k:
-                    U[[k, max_row], :] = U[[max_row, k], :]
-                    P[[k, max_row]] = P[[max_row, k]]
-                    L[[k, max_row], :k] = L[[max_row, k], :k]
+                max_index = np.argmax(np.abs(U[k:, k])) + k
+                if max_index != k:
+                    U[[k, max_index]] = U[[max_index, k]]
+                    P[[k, max_index]] = P[[max_index, k]]
+                    if k > 0:
+                        L[[k, max_index], :k] = L[[max_index, k], :k]
             
-            if U[k, k] == 0:
-                raise np.linalg.LinAlgError("Zero pivot encountered")
+            if abs(U[k, k]) < 1e-12:
+                raise ValueError("Matrix is singular")
             
-            L[k+1:, k] = U[k+1:, k] / U[k, k]
-            U[k+1:] -= L[k+1:, k, None] * U[k]
-        
-        np.fill_diagonal(L, 1.0)
+            for i in range(k+1, n):
+                L[i, k] = U[i, k] / U[k, k]
+                U[i, k:] -= L[i, k] * U[k, k:]
+
         return L, U, P
 
 
@@ -57,7 +60,7 @@ def get_A_b(a_11: float, b_1: float) -> tuple[NDArrayFloat, NDArrayFloat]:
 
 
 if __name__ == "__main__":
-    p = 16  
+    p = 16
     a_11 = 3 + 10 ** (-p)
     b_1 = -16 + 10 ** (-p)
     A, b = get_A_b(a_11, b_1)
