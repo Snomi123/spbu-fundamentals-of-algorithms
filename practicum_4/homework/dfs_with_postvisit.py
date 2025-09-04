@@ -1,7 +1,11 @@
+import sys
 from pathlib import Path
 from collections import deque
 from typing import Any
 from abc import ABC, abstractmethod
+
+project_root = Path(__file__).parent.parent.parent
+sys.path.append(str(project_root))
 
 import networkx as nx
 
@@ -12,7 +16,7 @@ from src.common import AnyNxGraph
 
 class DfsViaLifoQueueWithPostvisit(GraphTraversal):
     def run(self, node: Any) -> None:
-        stack = [(node, False)]  # (node, is_postvisit)
+        stack = [(node, False)]  
 
         while stack:
             current, is_postvisit = stack.pop()
