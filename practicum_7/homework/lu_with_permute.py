@@ -1,10 +1,17 @@
 from abc import ABC, abstractmethod
-
 import numpy as np
-from numpy.typing import DTypeLike
 
-from practicum_7.lu import LinearSystemSolver
-from src.common import NDArrayFloat
+DTypeLike = type
+NDArrayFloat = np.ndarray
+
+class LinearSystemSolver(ABC):
+    def __init__(self, A: NDArrayFloat, dtype: DTypeLike) -> None:
+        self.A = A.astype(dtype)
+        self.dtype = dtype
+
+    @abstractmethod
+    def solve(self, b: NDArrayFloat) -> NDArrayFloat:
+        pass
 
 
 class LuSolverWithPermute(LinearSystemSolver):
@@ -68,3 +75,4 @@ if __name__ == "__main__":
     solver = LuSolverWithPermute(A, np.float64, permute=True)
     x = solver.solve(b)
     assert np.all(np.isclose(x, [1, -7, 4])), f"The anwser {x} is not accurate enough"
+    print("Тест пройден успешно!")
